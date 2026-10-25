@@ -40,7 +40,7 @@ const waitArg = z.number().int().min(0).max(1800).default(240)
 
 const defaultPolicy = bridge.defaults.permissions ? `permissions ${bridge.defaults.permissions}` : `sandbox ${bridge.defaults.sandbox}`;
 
-const server = new McpServer({ name: 'codex', version: '0.2.1' });
+const server = new McpServer({ name: 'codex', version: '0.2.2' });
 
 server.registerTool(
   'codex_run',

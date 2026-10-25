@@ -1,6 +1,6 @@
 {
   "name": "codex-app-server-mcp",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "MCP server that lets Claude Code (or any MCP client) drive OpenAI Codex through codex app-server: persistent threads, async turns, resume.",
   "main": "server.mjs",
   "scripts": {
