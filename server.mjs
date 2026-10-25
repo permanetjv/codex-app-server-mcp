@@ -219,7 +219,7 @@ server.registerTool(
     description:
       'Archive finished Codex threads so they leave the thread list (codex unarchive restores them). ' +
       'Use this instead of `codex archive`, which fails while this bridge still holds the thread. ' +
-      'Refuses a thread with a running turn; a thread held by another live session fails with its error.',
+      'Refuses a thread with a running turn; a thread held by another live session fails with its error. Archived threads stay in reports with status "archived".',
     inputSchema: { thread_ids: z.array(z.string()).min(1) },
   },
   async ({ thread_ids }) => {

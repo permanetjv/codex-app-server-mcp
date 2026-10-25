@@ -177,6 +177,19 @@ test('archive: finished threads are archived and forgotten; running and foreign-
   assert.match(res[1].error, /running turn/);
   assert.equal(res[2].archived, false);
   assert.match(res[2].error, /active writer/);
-  await assert.rejects(call('codex_status', { thread_ids: [done.thread_id] }), /no turn in this bridge session/);
+  const [status] = await call('codex_status', { thread_ids: [done.thread_id] });
+  assert.equal(status.status, 'archived');
+  await assert.rejects(call('codex_run', { thread_id: done.thread_id, prompt: 'echo x', wait_seconds: 5 }), /is archived/);
   await call('codex_interrupt', { thread_id: busy.thread_id });
+});
+
+test('archive: a thread archived during a batch codex_wait still resolves the wait', async () => {
+  const done = await call('codex_run', { cwd: '/tmp', prompt: 'echo fin', wait_seconds: 5 });
+  const busy = await call('codex_run', { cwd: '/tmp', prompt: 'slow', wait_seconds: 0 });
+  const waiting = call('codex_wait', { thread_ids: [done.thread_id, busy.thread_id], mode: 'all', wait_seconds: 10 });
+  const [res] = await call('codex_archive', { thread_ids: [done.thread_id] });
+  assert.deepEqual(res, { thread_id: done.thread_id, archived: true });
+  await call('codex_steer', { thread_id: busy.thread_id, prompt: 'stop' });
+  const reports = await waiting;
+  assert.deepEqual(reports.map((r) => r.status), ['archived', 'completed']);
 });
