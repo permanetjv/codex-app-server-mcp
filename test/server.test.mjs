@@ -179,7 +179,7 @@ test('archive: finished threads are archived and forgotten; running and foreign-
   assert.match(res[2].error, /active writer/);
   const [status] = await call('codex_status', { thread_ids: [done.thread_id] });
   assert.equal(status.status, 'archived');
-  await assert.rejects(call('codex_run', { thread_id: done.thread_id, prompt: 'echo x', wait_seconds: 5 }), /is archived/);
+  await assert.rejects(call('codex_run', { thread_id: done.thread_id, prompt: 'echo x', wait_seconds: 5 }), /was archived in this bridge session/);
   await call('codex_interrupt', { thread_id: busy.thread_id });
 });
 
