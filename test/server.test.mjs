@@ -35,7 +35,7 @@ async function call(name, args) {
 test('exposes every tool', async () => {
   const names = (await client.listTools()).tools.map((t) => t.name).sort();
   assert.deepEqual(names, [
-    'codex_compact', 'codex_interrupt', 'codex_models', 'codex_respond', 'codex_review',
+    'codex_archive', 'codex_compact', 'codex_interrupt', 'codex_models', 'codex_respond', 'codex_review',
     'codex_run', 'codex_status', 'codex_steer', 'codex_threads', 'codex_wait',
   ]);
 });
@@ -166,4 +166,17 @@ test('app-server crash fails the running turn, the bridge respawns, threads keep
   assert.equal(again.latest_message, 'back');
   const resumed = await call('codex_run', { thread_id: ro.thread_id, prompt: 'policy', wait_seconds: 5 });
   assert.equal(resumed.latest_message, 'sandbox=read-only');
+});
+
+test('archive: finished threads are archived and forgotten; running and foreign-held ones are refused', async () => {
+  const done = await call('codex_run', { cwd: '/tmp', prompt: 'echo bye', wait_seconds: 5 });
+  const busy = await call('codex_run', { cwd: '/tmp', prompt: 'slow', wait_seconds: 0 });
+  const res = await call('codex_archive', { thread_ids: [done.thread_id, busy.thread_id, 'thread_held'] });
+  assert.deepEqual(res[0], { thread_id: done.thread_id, archived: true });
+  assert.equal(res[1].archived, false);
+  assert.match(res[1].error, /running turn/);
+  assert.equal(res[2].archived, false);
+  assert.match(res[2].error, /active writer/);
+  await assert.rejects(call('codex_status', { thread_ids: [done.thread_id] }), /no turn in this bridge session/);
+  await call('codex_interrupt', { thread_id: busy.thread_id });
 });

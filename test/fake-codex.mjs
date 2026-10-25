@@ -124,6 +124,11 @@ const handlers = {
     return { turn: turn(turnId), reviewThreadId: p.threadId };
   },
   'thread/compact/start': () => ({}),
+  // Like the real app-server, another live process holding the thread refuses the archive.
+  'thread/archive': (p) => {
+    if (p.threadId === 'thread_held') throw new Error(`thread ${p.threadId} already has an active writer`);
+    return {};
+  },
   'model/list': () => ({
     data: [{ id: 'fake-model', displayName: 'Fake', description: 'd', isDefault: true, defaultReasoningEffort: 'medium', supportedReasoningEfforts: [{ reasoningEffort: 'low' }, { reasoningEffort: 'medium' }] }],
     nextCursor: null,

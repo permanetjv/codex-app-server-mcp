@@ -40,7 +40,7 @@ const waitArg = z.number().int().min(0).max(1800).default(240)
 
 const defaultPolicy = bridge.defaults.permissions ? `permissions ${bridge.defaults.permissions}` : `sandbox ${bridge.defaults.sandbox}`;
 
-const server = new McpServer({ name: 'codex', version: '0.2.0' });
+const server = new McpServer({ name: 'codex', version: '0.2.1' });
 
 server.registerTool(
   'codex_run',
@@ -209,6 +209,30 @@ server.registerTool(
   async ({ thread_id }) => {
     await bridge.compact(thread_id);
     return json({ thread_id, compaction: 'started' });
+  },
+);
+
+server.registerTool(
+  'codex_archive',
+  {
+    title: 'Archive Codex threads',
+    description:
+      'Archive finished Codex threads so they leave the thread list (codex unarchive restores them). ' +
+      'Use this instead of `codex archive`, which fails while this bridge still holds the thread. ' +
+      'Refuses a thread with a running turn; a thread held by another live session fails with its error.',
+    inputSchema: { thread_ids: z.array(z.string()).min(1) },
+  },
+  async ({ thread_ids }) => {
+    const results = [];
+    for (const thread_id of thread_ids) {
+      try {
+        await bridge.archive(thread_id);
+        results.push({ thread_id, archived: true });
+      } catch (e) {
+        results.push({ thread_id, archived: false, error: e.message });
+      }
+    }
+    return json(results);
   },
 );
 

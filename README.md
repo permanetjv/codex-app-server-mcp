@@ -27,6 +27,7 @@ Most Codex MCP wrappers shell out to `codex exec` once per task. This one keeps 
 | `codex_interrupt` | Stop the running turn. |
 | `codex_review` | Codex's native read-only review of `uncommitted` changes, a branch vs `base_branch`, or a `commit_sha`. Add `focus` and/or `adversarial: true` for a steerable design challenge. |
 | `codex_compact` | Compact a long thread's history to free up context. |
+| `codex_archive` | Archive finished threads (`thread_ids`). Goes through this bridge's app-server, which holds each thread it has loaded; `codex archive` from another process fails until this bridge exits. |
 | `codex_models` | Models available to your Codex login, with supported reasoning efforts. |
 | `codex_threads` | Recent Codex threads (including ones from the Codex app/CLI). |
 
