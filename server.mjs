@@ -4,7 +4,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
-import { log } from './lib/app-server.mjs';
+import { log, version } from './lib/app-server.mjs';
 import { APPROVAL_POLICIES, Bridge, SANDBOX_MODES } from './lib/bridge.mjs';
 
 const env = (name, allowed, fallback) => {
@@ -21,6 +21,7 @@ const bridge = new Bridge({
   bin: process.env.CODEX_BIN || 'codex',
   sandbox: env('CODEX_SANDBOX', SANDBOX_MODES, 'workspace-write'),
   permissions: process.env.CODEX_PERMISSIONS || undefined, // named permission profile; replaces the sandbox default
+  reviewPermissions: process.env.CODEX_REVIEW_PERMISSIONS || undefined,
   approval: env('CODEX_APPROVAL', APPROVAL_POLICIES, 'on-request'),
   worktreeRoot: process.env.CODEX_WORKTREE_ROOT || undefined,
   model: process.env.CODEX_MODEL || undefined, // undefined → ~/.codex/config.toml default
@@ -40,7 +41,7 @@ const waitArg = z.number().int().min(0).max(1800).default(240)
 
 const defaultPolicy = bridge.defaults.permissions ? `permissions ${bridge.defaults.permissions}` : `sandbox ${bridge.defaults.sandbox}`;
 
-const server = new McpServer({ name: 'codex', version: '0.2.2' });
+const server = new McpServer({ name: 'codex', version });
 
 server.registerTool(
   'codex_run',
@@ -177,7 +178,7 @@ server.registerTool(
   {
     title: 'Codex code review',
     description:
-      'Run Codex\'s native code review (read-only) in a git repo. The review text comes back in the "review" field. ' +
+      `Run Codex's native code review in a git repo using ${bridge.defaults.reviewPermissions ? `permissions ${bridge.defaults.reviewPermissions}` : bridge.defaults.permissions ? 'permissions :read-only' : 'sandbox read-only'}. The review text comes back in the \"review\" field. ` +
       'Pass focus and/or adversarial: true for a steerable review that challenges the design, not just bugs.',
     inputSchema: {
       cwd: z.string().describe('Absolute path inside the git repository.'),

@@ -7,6 +7,8 @@
 //   "crash"        exit the process mid-turn
 //   "approve-early" like approve, but the request is sent before the turn/start response
 //   "policy"       reply with the sandbox or permission profile this thread was started/resumed with
+import { readFileSync } from 'node:fs';
+
 if (process.argv[2] !== 'app-server') process.exit(2);
 
 let buf = '';
@@ -81,7 +83,10 @@ function startTurn(threadId, text) {
 }
 
 const handlers = {
-  initialize: () => ({ userAgent: 'fake', codexHome: '/tmp', platformFamily: 'unix', platformOs: 'macos' }),
+  initialize: (p) => {
+    if (p.clientInfo.version !== JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version) throw new Error('incorrect client version');
+    return { userAgent: 'fake', codexHome: '/tmp', platformFamily: 'unix', platformOs: 'macos' };
+  },
   'thread/start': (p) => {
     const policy = policyOf(p);
     const id = `thread_${threadSeq++}`;
