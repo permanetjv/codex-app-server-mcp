@@ -1,7 +1,7 @@
 // Offline tests: the real MCP server against a fake `codex app-server` (test/fake-codex.mjs).
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdtempSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, before, test } from 'node:test';
@@ -15,11 +15,14 @@ const worktreeRoot = mkdtempSync(join(tmpdir(), 'codex-mcp-worktrees-'));
 
 before(async () => {
   client = new Client({ name: 'test', version: '0' });
+  const env = { ...process.env, CODEX_BIN: path('./fake-codex.mjs'), CODEX_SANDBOX: 'workspace-write', CODEX_APPROVAL: 'on-request', CODEX_WORKTREE_ROOT: worktreeRoot };
+  delete env.CODEX_PERMISSIONS;
+  delete env.CODEX_REVIEW_PERMISSIONS;
   await client.connect(
     new StdioClientTransport({
       command: process.execPath,
       args: [path('../server.mjs')],
-      env: { ...process.env, CODEX_BIN: path('./fake-codex.mjs'), CODEX_SANDBOX: 'workspace-write', CODEX_APPROVAL: 'on-request', CODEX_WORKTREE_ROOT: worktreeRoot },
+      env,
       stderr: 'ignore',
     }),
   );
@@ -33,6 +36,7 @@ async function call(name, args) {
 }
 
 test('exposes every tool', async () => {
+  assert.equal(client.getServerVersion().version, JSON.parse(readFileSync(path('../package.json'), 'utf8')).version);
   const names = (await client.listTools()).tools.map((t) => t.name).sort();
   assert.deepEqual(names, [
     'codex_archive', 'codex_compact', 'codex_interrupt', 'codex_models', 'codex_respond', 'codex_review',

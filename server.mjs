@@ -4,7 +4,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
-import { log } from './lib/app-server.mjs';
+import { log, version } from './lib/app-server.mjs';
 import { APPROVAL_POLICIES, Bridge, SANDBOX_MODES } from './lib/bridge.mjs';
 
 const env = (name, allowed, fallback) => {
@@ -41,7 +41,7 @@ const waitArg = z.number().int().min(0).max(1800).default(240)
 
 const defaultPolicy = bridge.defaults.permissions ? `permissions ${bridge.defaults.permissions}` : `sandbox ${bridge.defaults.sandbox}`;
 
-const server = new McpServer({ name: 'codex', version: '0.2.2' });
+const server = new McpServer({ name: 'codex', version });
 
 server.registerTool(
   'codex_run',
