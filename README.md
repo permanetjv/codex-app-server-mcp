@@ -25,7 +25,7 @@ Most Codex MCP wrappers shell out to `codex exec` once per task. This one keeps 
 | `codex_respond` | Answer a pending request: approvals take `decision` (`accept` / `acceptForSession` / `decline` / `cancel`), questions take `answers`. |
 | `codex_steer` | Add instructions to the turn that's currently running. |
 | `codex_interrupt` | Stop the running turn. |
-| `codex_review` | Codex's native read-only review of `uncommitted` changes, a branch vs `base_branch`, or a `commit_sha`. Add `focus` and/or `adversarial: true` for a steerable design challenge. |
+| `codex_review` | Codex's native review of `uncommitted` changes, a branch vs `base_branch`, or a `commit_sha`. Add `focus` and/or `adversarial: true` for a steerable design challenge. |
 | `codex_compact` | Compact a long thread's history to free up context. |
 | `codex_archive` | Archive finished threads (`thread_ids`). Goes through this bridge's app-server, which holds each thread it has loaded; `codex archive` from another process fails until this bridge exits. |
 | `codex_models` | Models available to your Codex login, with supported reasoning efforts. |
@@ -71,6 +71,7 @@ From source: `git clone https://github.com/Goudu666/codex-app-server-mcp.git && 
 |---|---|---|
 | `CODEX_SANDBOX` | `workspace-write` | Default sandbox for new threads: `read-only`, `workspace-write`, `danger-full-access` |
 | `CODEX_PERMISSIONS` | unset | Default named permission profile for new threads (for example `:workspace` or a profile from your Codex config), sent instead of a sandbox. Cannot be combined with `CODEX_SANDBOX`. |
+| `CODEX_REVIEW_PERMISSIONS` | unset | Named permission profile for review threads; defaults to `:read-only` with a profile setup, or the read-only sandbox otherwise. |
 | `CODEX_APPROVAL` | `on-request` | Default approval policy: `untrusted`, `on-request`, `never` |
 | `CODEX_MODEL` | from `~/.codex/config.toml` | Default model |
 | `CODEX_EFFORT` | from `~/.codex/config.toml` | Default reasoning effort |
@@ -89,7 +90,7 @@ claude mcp add --scope user codex -e CODEX_SANDBOX=danger-full-access -e CODEX_A
 
 or per task: `codex_run({ ..., sandbox: "danger-full-access", approval: "never" })`. The sandbox is fixed once a thread starts; the approval policy can change between turns. MCP servers inside Codex that request a form (elicitation) are auto-declined.
 
-Codex permission profiles work too: set `CODEX_PERMISSIONS` (or pass `permissions` to `codex_run`) to send a named profile instead of a sandbox mode. Use this when your Codex config or managed requirements define `default_permissions` or restrict `allowed_permission_profiles`, since Codex rejects a sandbox mode combined with a profile. Like the sandbox, the profile is fixed once a thread starts. With a profile default, `codex_review` uses the built-in `:read-only` profile.
+Codex permission profiles work too: set `CODEX_PERMISSIONS` (or pass `permissions` to `codex_run`) to send a named profile instead of a sandbox mode. Use this when your Codex config or managed requirements define `default_permissions` or restrict `allowed_permission_profiles`, since Codex rejects a sandbox mode combined with a profile. Like the sandbox, the profile is fixed once a thread starts. Set `CODEX_REVIEW_PERMISSIONS` to choose the review profile; otherwise reviews use `:read-only` with a profile default or the read-only sandbox.
 
 ## Parallel work
 

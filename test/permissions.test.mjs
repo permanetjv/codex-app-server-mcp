@@ -12,6 +12,7 @@ before(async () => {
   client = new Client({ name: 'test', version: '0' });
   const env = { ...process.env, CODEX_BIN: path('./fake-codex.mjs'), CODEX_PERMISSIONS: 'ops', CODEX_APPROVAL: 'never' };
   delete env.CODEX_SANDBOX;
+  delete env.CODEX_REVIEW_PERMISSIONS;
   await client.connect(new StdioClientTransport({ command: process.execPath, args: [path('../server.mjs')], env, stderr: 'ignore' }));
 });
 after(() => client.close());
@@ -42,4 +43,15 @@ test('threads keep their profile across an app-server restart', async () => {
   await call('codex_run', { cwd: '/tmp', prompt: 'crash', wait_seconds: 5 });
   const resumed = await call('codex_run', { thread_id: r.thread_id, prompt: 'policy', wait_seconds: 5 });
   assert.equal(resumed.latest_message, 'permissions=ops');
+});
+
+ test('reviews use the configured review profile', async () => {
+  const other = new Client({ name: 'test-review', version: '0' });
+  const env = { ...process.env, CODEX_BIN: path('./fake-codex.mjs'), CODEX_PERMISSIONS: 'ops', CODEX_REVIEW_PERMISSIONS: 'review-ops', CODEX_APPROVAL: 'never' };
+  delete env.CODEX_SANDBOX;
+  await other.connect(new StdioClientTransport({ command: process.execPath, args: [path('../server.mjs')], env, stderr: 'ignore' }));
+  try {
+    const r = await other.callTool({ name: 'codex_review', arguments: { cwd: '/tmp', wait_seconds: 5 } });
+    assert.equal(JSON.parse(r.content[0].text).review, 'REVIEW permissions=review-ops {"type":"uncommittedChanges"}');
+  } finally { await other.close(); }
 });
